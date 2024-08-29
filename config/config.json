@@ -14,11 +14,11 @@
     "dialect": "mysql"
   },
   "production": {
-    "username": "process.env.DB_USERNAME",
-    "password": "process.env.DB_PASSWORD",
-    "database": "process.env.DB_DATABASE",
-    "host": "process.env.DB_HOST",
-    "port": "process.env.DB_PORT",
+    "username": "urhaunurpyaz8djp",
+    "password": "wMa5whhzK9osNirhKlYl",
+    "database": "bf6xcqtvgjju5bgs6zf4",
+    "host": "bf6xcqtvgjju5bgs6zf4-mysql.services.clever-cloud.com",
+    "port": 3306,
     "dialect": "mysql"
   }
 }
