@@ -16,11 +16,11 @@ module.exports = {
     dialect: "mysql",
   },
   production: {
-    username: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT || 3306,
-    dialect: process.env.DB_DIALECT || "mysql",
+    username: process.env.MYSQL_ADDON_USER,
+    password: process.env.MYSQL_ADDON_PASSWORD,
+    database: process.env.MYSQL_ADDON_DB,
+    host: process.env.MYSQL_ADDON_HOST,
+    port: process.env.MYSQL_ADDON_PORT || 3306,
+    dialect: 'mysql'
   },
 };

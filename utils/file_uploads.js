@@ -1,4 +1,4 @@
-const cloudinary = require('cloudinary').v2;
+const cloudinary = require("cloudinary").v2;
 
 // Configure Cloudinary
 cloudinary.config({
@@ -18,7 +18,7 @@ const uploadToCloudinary = (file) => {
       if (error) {
         reject(error);
       } else {
-        resolve(result);
+        resolve({ secure_url: result.secure_url, public_id: result.public_id });
       }
     });
   });
@@ -42,8 +42,8 @@ const uploadFile = (name, isSingle = true) => {
       if (isSingle) {
         const file = req.files[name];
         const result = await uploadToCloudinary(file);
-        req.body[`${name}Url`] = result.secure_url; // Attach Cloudinary URL to the request body
-
+        // console.log(result);
+        req.body[`${name}Url`] = result.secure_url; // Attach Cloudinary URL to the request body`
       } else {
         // Multiple file upload
         const files = req.files[name];

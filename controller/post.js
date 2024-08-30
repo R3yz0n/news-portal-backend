@@ -1,9 +1,65 @@
 const { post, fileuploads, category, user } = require("../models");
 const db = require("../models");
 const PaginationData = require("../utils/pagination");
+const uploadToCloudinary = require("../utils/file_uploads");
+const cloudinary = require("cloudinary").v2;
 
 const removeFile = require("../utils/remove_file");
 const { Op } = require("sequelize");
+
+const createPostController = async (req, res, next) => {
+  const { title, body, category_id, is_mukhya_samachar, author } = req.body;
+  
+  let transactionx = await db.sequelize.transaction();
+  try {
+    // console.log(req.body);
+    const postData = {
+      title: title,
+      body: body,
+      user_id: req.user_id,
+      category_id: category_id,
+      is_mukhya_samachar: is_mukhya_samachar,
+      author: author,
+      priority: 1,
+      status: "active",
+    };
+    // Handle file upload and save in Cloudinary
+    // if (featured_imageUrl) {
+      const fullImageUrl = req.body.featured_imageUrl;
+      const fileName = fullImageUrl.substring(fullImageUrl.lastIndexOf('/') + 1);
+      postData["featured_image"] = fileName;
+      console.log(fileName)
+      // Save file information to `fileuploads` table
+      const fileInfo = await fileuploads.create({
+        name: fileName, // Save the Cloudinary URL
+        size: req.files.featured_image.size,
+        type: req.files.featured_image.mimetype,
+      });
+
+      postData["featured_image_id"] = fileInfo.id; // Save the file info ID in the post data
+    // }
+    // postData["featured_image"] = file.filename;
+    const data = await post.create(postData, { transaction: transactionx });
+    postData["id"] = data.id;
+    await transactionx.commit();
+    return res.status(201).json({
+      success: true,
+      data: postData,
+    });
+  } catch (error) {
+    console.log(error);
+    if (transactionx) {
+      await transactionx.rollback();
+    }
+    if (req.files && req.files.featured_image) {
+      await cloudinary.uploader.destroy(req.files.featured_image.name); // Remove from Cloudinary if needed
+    }
+    return res.status(500).json({
+      success: true,
+      error: "Server error",
+    });
+  }
+};
 
 const getPostController = async (req, res, next) => {
   const { page = 0, size = 10 } = req.query;
@@ -58,52 +114,6 @@ const getPostController = async (req, res, next) => {
     });
   }
 };
-
-const createPostController = async (req, res, next) => {
-  const { title, body, category_id, is_mukhya_samachar, author } = req.body;
-  let transactionx = await db.sequelize.transaction();
-  try {
-    // console.log(req.body);
-    const postData = {
-      title: title,
-      body: body,
-      user_id: req.user_id,
-      category_id: category_id,
-      is_mukhya_samachar: is_mukhya_samachar,
-      author: author,
-      priority: 1,
-      status: "active",
-    };
-    const file = req.files.featured_image;
-    console.log(file);
-    
-    const fileInfo = await fileuploads.create({
-      name: file.name,
-      size: file.size,  
-      type: file.mimetype,
-    }); 
-    postData["featured_image_id"] = fileInfo.id;
-    postData["featured_image"] = file.filename;
-    const data = await post.create(postData, { transaction: transactionx });
-    postData["id"] = data.id;
-    await transactionx.commit();
-    return res.status(201).json({
-      success: true,
-      data: postData,
-    });
-  } catch (error) {
-    console.log(error);
-    if (transactionx) {
-      await transactionx.rollback();
-    }
-    removeFile(req.files.filename);
-    return res.status(500).json({
-      success: true,
-      error: "Server error",
-    });
-  }
-};
-
 //   try {
 //     const categories = await category.findAll({
 //     //   where: {
