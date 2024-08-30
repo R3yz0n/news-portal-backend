@@ -2,9 +2,9 @@ const removeFile = require("../utils/remove_file");
 const validator = require("../utils/validator");
 const postValidation = async (req, res, next) => {
   const validationRule = {
-    featured_image: "required",
+    featured_imageUrl: "required",
     title: "required|string",
-    body: "required|string",
+    body: "required|string",  
     category_id: "required|integer",
     author: "required|string",
     is_mukhya_samachar: "required|integer",
@@ -14,6 +14,9 @@ const postValidation = async (req, res, next) => {
     delete validationRule["featured_image"];
   }
   await validator(req.body, validationRule, {}, (err, status) => {
+
+    
+    
     if (!status) {
       const errValue = err.errors;
       if (req.file != undefined) {

@@ -5,12 +5,18 @@ dot.config();
 const app = express();
 const port = process.env.PORT || 8080;
 require("./utils/update_Adverties_status");
+const fileUpload = require('express-fileupload');
+
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 const apiRoutes = require("./routes/index");
 
 app.use(cors());
+app.use(fileUpload({
+  useTempFiles: true, // This will allow you to use `tempFilePath`
+  tempFileDir: '/tmp/' // You can set this to any temp directory
+}));
 app.use("/static", express.static(__dirname + "/public"));
 
 app.get("/", (req, res, next) => {

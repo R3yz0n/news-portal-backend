@@ -41,7 +41,7 @@ const getCompanyController = async (req, res, next) => {
 
 const createCompanyController = async (req, res, next) => {
   let transactionx = await db.sequelize.transaction();
-  const file = req.file;
+  const file = req.files.logo;
   //  console.log(file.filename)
   try {
     const checkCompanyData = await company.findAll({ attributes: ["name"] });

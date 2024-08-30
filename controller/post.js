@@ -63,6 +63,7 @@ const createPostController = async (req, res, next) => {
   const { title, body, category_id, is_mukhya_samachar, author } = req.body;
   let transactionx = await db.sequelize.transaction();
   try {
+    // console.log(req.body);
     const postData = {
       title: title,
       body: body,
@@ -73,12 +74,14 @@ const createPostController = async (req, res, next) => {
       priority: 1,
       status: "active",
     };
-    const file = req.file;
+    const file = req.files.featured_image;
+    console.log(file);
+    
     const fileInfo = await fileuploads.create({
-      name: file.filename,
-      size: file.size,
+      name: file.name,
+      size: file.size,  
       type: file.mimetype,
-    });
+    }); 
     postData["featured_image_id"] = fileInfo.id;
     postData["featured_image"] = file.filename;
     const data = await post.create(postData, { transaction: transactionx });
@@ -93,7 +96,7 @@ const createPostController = async (req, res, next) => {
     if (transactionx) {
       await transactionx.rollback();
     }
-    removeFile(req.file.filename);
+    removeFile(req.files.filename);
     return res.status(500).json({
       success: true,
       error: "Server error",

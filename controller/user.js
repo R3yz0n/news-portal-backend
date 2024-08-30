@@ -8,7 +8,7 @@ const PaginationData = require("../utils/pagination");
 const createUserController = async (req, res, next) => {
   const salt = bcrypt.genSaltSync(parseInt(process.env.SALTROUND));
   const { fullname, username, address, password, phone_no, gender } = req.body;
-  const file = req.file;
+  const file = req.files.profile_image;
   let transactionx = await db.sequelize.transaction();
   const hash = bcrypt.hashSync(password, salt);
   try {
