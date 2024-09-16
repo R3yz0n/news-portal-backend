@@ -17,7 +17,7 @@ app.use(fileUpload({
   useTempFiles: true, // This will allow you to use `tempFilePath`
   tempFileDir: '/tmp/' // You can set this to any temp directory
 }));
-app.use("/static", express.static(__dirname + "/public"));
+// app.use("/static", express.static(__dirname + "/public"));
 
 app.get("/", (req, res, next) => {
   res.status(200).json({

@@ -5,10 +5,11 @@ const removeFile = require("../utils/remove_file");
 const { comparePassword, getToken } = require("../utils/token");
 const bcrypt = require("bcrypt");
 const PaginationData = require("../utils/pagination");
+
 const createUserController = async (req, res, next) => {
   const salt = bcrypt.genSaltSync(parseInt(process.env.SALTROUND));
   const { fullname, username, address, password, phone_no, gender } = req.body;
-  const file = req.files.profile_image;
+  // const file = req.files.profile_image;
   let transactionx = await db.sequelize.transaction();
   const hash = bcrypt.hashSync(password, salt);
   try {
@@ -21,18 +22,22 @@ const createUserController = async (req, res, next) => {
       role: "user",
       password: hash,
     };
+    const fullImageUrl = req.body.profile_imageUrl; // Assuming imageUrl is passed in the request body
+    const fileName = fullImageUrl.substring(fullImageUrl.lastIndexOf("/") + 1);
+
+    // Save file information to `fileuploads` table
     const fileInfo = await fileuploads.create(
       {
-        name: file.filename,
-        size: file.size,
-        type: file.mimetype,
+        name: fileName, // Save the Cloudinary file name
+        size: req.files.profile_image.size, // Assuming file size is available
+        type: req.files.profile_image.mimetype, // Assuming MIME type is available
       },
       { transaction: transactionx }
     );
     userData["user_profile_id"] = fileInfo.id;
     const data = await user.create(userData, { transaction: transactionx });
     userData["id"] = data.id;
-    userData["profile_image"] = file.filename;
+    userData["profile_image"] = fileName;
     await transactionx.commit();
     return res.status(200).json({
       success: true,
@@ -42,8 +47,14 @@ const createUserController = async (req, res, next) => {
     console.log(err);
     await transactionx.rollback();
 
-    removeFile(file.filename);
-    if (err.original.code == "ER_DUP_ENTRY") {
+    if (req.files && req.files.image && req.files.image.public_id) {
+      try {
+        await cloudinary.uploader.destroy(req.files.image.public_id);
+      } catch (cloudinaryError) {
+        console.error("Cloudinary Error:", cloudinaryError);
+      }
+    }
+    if (err.original == "ER_DUP_ENTRY") {
       return res.status(409).json({ error: "Duplicate entry error" });
     }
     return res.status(500).json({
@@ -173,7 +184,7 @@ const loginController = async (req, res, next) => {
 
 const editUserController = async (req, res, next) => {
   let transactionx = await db.sequelize.transaction();
-  const file = req.file;
+  const file = req.files;
 
   const { fullname, address, phone_no, gender } = req.body;
   const editUserData = {
@@ -214,16 +225,13 @@ const editUserController = async (req, res, next) => {
     }
 
     const imageId = data[0].user_profile_id;
-    const imageName = await fileuploads.findAll(
-      { where: { id: imageId } },
-      { transaction: transactionx }
-    );
-
+    const fullImageUrl = req.body.profile_imageUrl; // Assuming imageUrl is passed in the request body
+    const fileName = fullImageUrl.substring(fullImageUrl.lastIndexOf("/") + 1);
     const fileInfo = await fileuploads.update(
       {
-        name: file.filename,
-        size: file.size,
-        type: file.mimetype,
+        name: fileName, // Save the Cloudinary file name
+        size: req.files.profile_image.size, // Assuming file size is available
+        type: req.files.profile_image.mimetype, // Assuming MIME type is available
       },
       {
         where: {
@@ -243,7 +251,7 @@ const editUserController = async (req, res, next) => {
       { transaction: transactionx }
     );
     if (fileInfo[0] == 1 && (editedData[0] == 1 || editedData[0] == 0)) {
-      removeFile(imageName[0].name);
+      await cloudinary.uploader.destroy(req.files.featured_image.name);
       editUserData["profile_image"] = req.file.filename;
       await transactionx.commit();
       return res.status(200).json({
@@ -252,7 +260,7 @@ const editUserController = async (req, res, next) => {
       });
     } else {
       await transactionx.rollback();
-      removeFile(req.file.filename);
+      await cloudinary.uploader.destroy(req.files.featured_image.name);
       return res.status(500).json({
         success: false,
         error: "Server error",
@@ -260,8 +268,8 @@ const editUserController = async (req, res, next) => {
     }
   } catch (error) {
     console.log(error);
-    if (req.file) {
-      removeFile(req.file.filename);
+    if (file) {
+      await cloudinary.uploader.destroy(req.files.featured_image.name);
     }
     await transactionx.rollback();
     return res.status(500).json({

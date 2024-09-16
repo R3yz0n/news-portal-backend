@@ -22,7 +22,6 @@ routes.post("/login", userController.loginController);
 routes.put(
   "/:id",
   tokenVerification,
-  fileUpload("profile_image"),
   editUserValidation,
   userController.editUserController
 );

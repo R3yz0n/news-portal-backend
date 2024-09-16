@@ -1,14 +1,11 @@
 const { Model } = require("sequelize");
 const { advertisement } = require("../models");
 
-
 const getAdvertisementController = async (req, res, next) => {
   try {
-    const data = await advertisement.findAll(
-      {
-        attributes: { exclude: ["updated_at"] },
-      }
-    );
+    const data = await advertisement.findAll({
+      attributes: { exclude: ["updated_at"] },
+    });
     return res.status(200).json({
       success: true,
       data: data,

@@ -1,15 +1,13 @@
 const { post, fileuploads, category, user } = require("../models");
 const db = require("../models");
 const PaginationData = require("../utils/pagination");
-const uploadToCloudinary = require("../utils/file_uploads");
 const cloudinary = require("cloudinary").v2;
 
-const removeFile = require("../utils/remove_file");
 const { Op } = require("sequelize");
 
 const createPostController = async (req, res, next) => {
   const { title, body, category_id, is_mukhya_samachar, author } = req.body;
-  
+
   let transactionx = await db.sequelize.transaction();
   try {
     // console.log(req.body);
@@ -24,21 +22,17 @@ const createPostController = async (req, res, next) => {
       status: "active",
     };
     // Handle file upload and save in Cloudinary
-    // if (featured_imageUrl) {
-      const fullImageUrl = req.body.featured_imageUrl;
-      const fileName = fullImageUrl.substring(fullImageUrl.lastIndexOf('/') + 1);
-      postData["featured_image"] = fileName;
-      console.log(fileName)
-      // Save file information to `fileuploads` table
-      const fileInfo = await fileuploads.create({
-        name: fileName, // Save the Cloudinary URL
-        size: req.files.featured_image.size,
-        type: req.files.featured_image.mimetype,
-      });
+    const fullImageUrl = req.body.featured_imageUrl;
+    const fileName = fullImageUrl.substring(fullImageUrl.lastIndexOf("/") + 1);
+    postData["featured_image"] = fileName;
+    // Save file information to `fileuploads` table
+    const fileInfo = await fileuploads.create({
+      name: fileName, // Save the Cloudinary URL
+      size: req.files.featured_image.size,
+      type: req.files.featured_image.mimetype,
+    });
 
-      postData["featured_image_id"] = fileInfo.id; // Save the file info ID in the post data
-    // }
-    // postData["featured_image"] = file.filename;
+    postData["featured_image_id"] = fileInfo.id; // Save the file info ID in the post data
     const data = await post.create(postData, { transaction: transactionx });
     postData["id"] = data.id;
     await transactionx.commit();
@@ -114,31 +108,6 @@ const getPostController = async (req, res, next) => {
     });
   }
 };
-//   try {
-//     const categories = await category.findAll({
-//     //   where: {
-//     //     name: req.params.name,
-//     //   },
-//       //   include: [
-//       //     {
-//       //       model: post,
-//       //       as: "post",
-//       //     },
-//       //   ],
-//     });
-//     console.log(categories);
-//     return res.status(200).json({
-//       success: true,
-//       data: categories,
-//     });
-//   } catch (err) {
-//     console.log(err);
-//     return res.status(500).json({
-//       success: true,
-//       error: "Server error",
-//     });
-//   }
-// };
 
 const categoryPostController = async (req, res, next) => {
   try {
@@ -187,104 +156,76 @@ const categoryPostController = async (req, res, next) => {
 };
 
 const editPostController = async (req, res, next) => {
-  let transactionx = await db.sequelize.transaction();
-  const file = req.file;
-
   const { title, body, category_id, is_mukhya_samachar, status } = req.body;
-  const editPostData = {
-    title: title,
-    body: body,
-    user_id: req.user_id,
-    category_id: category_id,
-    is_mukhya_samachar: is_mukhya_samachar,
-    status: status,
-  };
+  let transactionx;
+
   try {
-    const data = await post.findAll({
+    transactionx = await db.sequelize.transaction();
+
+    const editPostData = {
+      title,
+      body,
+      user_id: req.user_id,
+      category_id,
+      is_mukhya_samachar,
+      status,
+    };
+
+    const fullImageUrl = req.body.featured_imageUrl;
+    const fileName = fullImageUrl.substring(fullImageUrl.lastIndexOf("/") + 1);
+
+    const postData = await post.findOne({
       attributes: ["id", "title", "featured_image_id"],
-      where: {
-        id: req.params.id,
-      },
+      where: { id: req.params.id },
     });
 
-    if (data.length == 0) {
-      return res.status(404).json({
-        message: "Post  not found",
-      });
+    if (!postData) {
+      return res.status(404).json({ message: "Post not found" });
     }
-    if (file === undefined) {
-      let editedData = await post.update(
-        editPostData,
-        {
-          where: {
-            id: req.params.id,
-          },
-        },
-        { transaction: transactionx }
-      );
+
+    if (!req.files) {
+      await post.update(editPostData, {
+        where: { id: req.params.id },
+        transaction: transactionx,
+      });
 
       await transactionx.commit();
-      editedData = editPostData;
-      return res.status(200).json({
-        success: true,
-        data: editPostData,
-      });
+      return res.status(200).json({ success: true, data: editPostData });
     }
 
-    const imageId = data[0].featured_image_id;
-    const fileName = await fileuploads.findAll(
-      { where: imageId },
-      { transaction: transactionx }
-    );
-    const fileInfo = await fileuploads.update(
-      {
-        name: file.filename,
-        size: file.size,
-        type: file.mimetype,
-      },
-      {
-        where: {
-          id: imageId,
-        },
-      },
+    const imageId = postData.featured_image_id;
+    const previousFile = await fileuploads.findOne({ where: { id: imageId }, transaction: transactionx });
 
-      { transaction: transactionx }
-    );
-    const editedData = await post.update(
-      editPostData,
+    await fileuploads.update(
       {
-        where: {
-          id: req.params.id,
-        },
+        name: fileName,
+        size: req.files.featured_image.size,
+        type: req.files.featured_image.mimetype,
       },
-      { transaction: transactionx }
+      { where: { id: imageId }, transaction: transactionx }
     );
-    if ((fileInfo[0] == 1 && editedData[0] == 1) || editedData[0] == 0) {
-      removeFile(fileName[0].name);
-      editPostData["featured_image"] = req.file.filename;
-      await transactionx.commit();
-      return res.status(200).json({
-        success: true,
-        data: editPostData,
-      });
-    }
-    await transactionx.rollback();
-    removeFile(req.file.filename);
-    return res.status(500).json({
-      success: false,
-      error: "Server error",
-    });
+
+    await post.update(editPostData, { where: { id: req.params.id }, transaction: transactionx });
+
+    await cloudinary.uploader.destroy(previousFile.name);
+    editPostData["featured_image"] = fileName;
+
+    await transactionx.commit();
+    return res.status(200).json({ success: true, data: editPostData });
   } catch (error) {
-    console.log(error);
-    if (req.file) {
-      removeFile(req.file.filename);
-    }
-    await transactionx.rollback();
+    console.error(error);
 
-    return res.status(500).json({
-      success: false,
-      error: "Server error",
-    });
+    if (transactionx) await transactionx.rollback();
+
+    if (req.files) {
+      try {
+        await cloudinary.uploader.destroy(req.files.featured_image.name);
+      } catch (cloudinaryError) {
+        console.error("Cloudinary Error:", cloudinaryError);
+      }
+    }
+
+    return res.status(500).json({ success: false, error: "Server error" });
   }
 };
 

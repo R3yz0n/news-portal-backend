@@ -2,7 +2,6 @@ const { company, socialmedia, fileuploads } = require("../models");
 const removeFile = require("../utils/remove_file");
 const db = require("../models");
 
-
 const getCompanyController = async (req, res, next) => {
   try {
     const data = await company.findAll({
@@ -26,6 +25,7 @@ const getCompanyController = async (req, res, next) => {
       attributes: { exclude: ["created_at", "updated_at"] },
       attributes: { exclude: ["created_at", "updated_at"] },
     });
+    
     return res.status(200).json({
       success: true,
       data: data,
@@ -37,7 +37,7 @@ const getCompanyController = async (req, res, next) => {
       error: "server error",
     });
   }
-}
+};
 
 const createCompanyController = async (req, res, next) => {
   let transactionx = await db.sequelize.transaction();
@@ -46,7 +46,7 @@ const createCompanyController = async (req, res, next) => {
   try {
     const checkCompanyData = await company.findAll({ attributes: ["name"] });
     if (checkCompanyData.length === 1) {
-      removeFile(file.filename);
+
       return res.status(403).json({
         success: false,
         error: "Already  Create",
@@ -64,19 +64,26 @@ const createCompanyController = async (req, res, next) => {
       salahakar: req.body.salahakar,
       ji_pra_ka_ru_d_no: req.body.ji_pra_ka_ru_d_no,
       media_biva_registration_cretificate_no:
-      req.body.media_biva_registration_cretificate_no,
+        req.body.media_biva_registration_cretificate_no,
       press_council_registration_no: req.body.press_council_registration_no,
       local_pra_registration_no: req.body.local_pra_registration_no,
       privacypolicy: req.body.privacypolicy,
       company_description: req.body.company_description,
     };
     // console.log(companyData)
-
+    const fullImageUrl = req.body.logoUrl;
+    const fileName = fullImageUrl.substring(fullImageUrl.lastIndexOf("/") + 1);
+    // Save file information to `fileuploads` table
     const fileInfo = await fileuploads.create({
-      name: file.filename,
-      size: file.size,
-      type: file.mimetype,
+      name: fileName, // Save the Cloudinary URL
+      size: req.files.logo.size,
+      type: req.files.logo.mimetype,
     });
+    // const fileInfo = await fileuploads.create({
+    //   name: file.filename,
+    //   size: file.size,
+    //   type: file.mimetype,
+    // });
     companyData["logo_id"] = fileInfo.id;
     companyData["logo"] = file.filename;
     const data = await company.create(companyData, {
@@ -106,18 +113,16 @@ const createCompanyController = async (req, res, next) => {
     console.log(error);
     if (transactionx) {
       await transactionx.rollback();
-    if (transactionx) {
-      await transactionx.rollback();
+      if (transactionx) {
+        await transactionx.rollback();
+      }
+      return res.status(500).json({
+        success: false,
+        error: "Server error",
+      });
     }
-    //  removeFile(file.filename);
-    return res.status(500).json({
-      success: false,
-      error: "Server error",
-    });
   }
 };
-  }
-
 
 const deleteCompany = async (req, res) => {
   try {
@@ -188,16 +193,16 @@ const editCompany = async (req, res) => {
         },
       });
       const imageId = data.logo_id;
+      const previousFile = await fileuploads.findOne({ where: { id: imageId }, transaction: transactionx });
       console.log(imageId);
-      const fileName = await fileuploads.findAll(
-        { where: imageId },
-        { transaction: transactionx }
-      );
+      
+      const fullImageUrl = req.body.logoUrl;
+      const fileName = fullImageUrl.substring(fullImageUrl.lastIndexOf("/") + 1);
       const fileInfo = await fileuploads.update(
         {
-          name: file.filename,
-          size: file.size,
-          type: file.mimetype,
+          name: fileName,
+          size: req.files.logo.size,
+          type: req.files.logo.mimetype,
         },
         {
           where: {
@@ -247,7 +252,7 @@ const editCompany = async (req, res) => {
   } catch (error) {
     console.log(error);
     if (req.file) {
-      removeFile(req.file.filename);
+      await cloudinary.uploader.destroy(previousFile.name);
     }
     await transactionx.rollback();
 
@@ -256,13 +261,11 @@ const editCompany = async (req, res) => {
       error: "Server error",
     });
   }
-    
-  }
+};
 
-module.exports= {
-    getCompanyController: getCompanyController,
-    createCompanyController: createCompanyController,
-    deleteCompany:deleteCompany,
-    editCompany:editCompany
-   
+module.exports = {
+  getCompanyController: getCompanyController,
+  createCompanyController: createCompanyController,
+  deleteCompany: deleteCompany,
+  editCompany: editCompany,
 };

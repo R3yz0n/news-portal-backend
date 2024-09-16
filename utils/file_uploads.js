@@ -32,6 +32,7 @@ const uploadToCloudinary = (file) => {
  */
 const uploadFile = (name, isSingle = true) => {
   return async (req, res, next) => {
+    console.log("hello",req.files);
     try {
       // Check if files are present
       if (!req.files || !req.files[name]) {

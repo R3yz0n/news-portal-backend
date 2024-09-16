@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
       this.hasOne(models.company, { foreignKey: "logo_id" });
       this.hasOne(models.user, { foreignKey: "user_profile_id" });
       this.hasOne(models.post, { foreignKey: "featured_image_id" });
-      this.hasOne(models.advertises, { foreignKey: "image" });
+      this.hasOne(models.advertises, { foreignKey: "image", as: "ads_image" });
     }
   }
   fileuploads.init(

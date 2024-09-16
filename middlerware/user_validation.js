@@ -7,17 +7,17 @@ const userValidation = async (req, res, next) => {
     address: "required|string",
     password: "required|string",
     phone_no: "required|string",
-    profile_image: "required",
+    profile_imageUrl: "required",
   };
   validationRule["gender"] = ["required", { in: ["male", "female", "other"] }];
-  if (req.file !== undefined) {
+  if (req.files !== undefined) {
     delete validationRule["profile_image"];
   }
 
   await validator(req.body, validationRule, {}, (err, status) => {
     if (!status) {
-      if (req.file !== undefined) {
-        removeFile(req.file.filename);
+      if (req.files !== undefined) {
+        cloudinary.uploader.destroy(req.files.profile_image.name);
       }
       const errValue = err.errors;
       return res.status(422).send({
@@ -27,8 +27,8 @@ const userValidation = async (req, res, next) => {
     }
     next();
   }).catch((err) => {
-    if (req.file !== undefined) {
-      removeFile(req.file.filename);
+    if (req.files !== undefined) {
+      cloudinary.uploader.destroy(req.files.profile_image.name);
     }
     console.log(err);
     return res.status(500).send({
@@ -48,9 +48,6 @@ const editUserValidation = async (req, res, next) => {
 
   await validator(req.body, validationRule, {}, (err, status) => {
     if (!status) {
-      if (req.file !== undefined) {
-        removeFile(req.file.filename);
-      }
       const errValue = err.errors;
       return res.status(422).send({
         success: false,
@@ -59,9 +56,6 @@ const editUserValidation = async (req, res, next) => {
     }
     next();
   }).catch((err) => {
-    if (req.file !== undefined) {
-      removeFile(req.file.filename);
-    }
     console.log(err);
     return res.status(500).send({
       success: false,

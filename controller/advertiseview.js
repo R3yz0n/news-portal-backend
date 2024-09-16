@@ -1,23 +1,24 @@
 const { Sequelize } = require("sequelize");
-const { advertisement, advertises, category } = require("../models");
+const Op = Sequelize.Op;
+const { advertisement, advertises, category,fileuploads } = require("../models");
 const groupBy = require("../utils/group");
 
 const homePageAdvertise = async (req, res) => {
   try {
     const parsedDate = new Date();
-
-    const formattedDate = `${parsedDate.getFullYear()}-${
-      parsedDate.getMonth() + 1
-    }-${parsedDate.getDate()}`;
-
+    const formattedDate = parsedDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
+    
+    console.log("formattedDate:"+formattedDate);
+    
+    
     const advertisesData = await advertises.findAll({
-      attributes: ["id", "image"],
+      attributes: ["id", "image","start_date","end_date"],
       where: {
         start_date: {
-          [Sequelize.Op.lte]: formattedDate,
+          [Op.lte]: formattedDate,
         },
         end_date: {
-          [Sequelize.Op.gte]: formattedDate,
+          [Op.gte]: formattedDate,
         },
         status: 1,
       },
@@ -27,6 +28,11 @@ const homePageAdvertise = async (req, res) => {
           model: advertisement,
           attributes: ["id", "type"],
         },
+          { 
+            model: fileuploads,
+            as: "ads_image",
+            attributes: { exclude: ["updated_at"] },
+          },
       ],
     });
 
@@ -39,10 +45,11 @@ const homePageAdvertise = async (req, res) => {
     console.log(error);
     return res.status(500).json({
       success: false,
-      error: "server error",
+      error: "Server error",
     });
   }
 };
+
 const specificCategoryAdversties = async (req, res) => {
   try {
     const categorySlug = req.params.category_slug;

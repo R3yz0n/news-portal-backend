@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       //   foreignKey:'adventisement_id',
       // });
       // advertises.hasMany(transation);
-      this.belongsTo(models.fileuploads, { foreignKey: "image" });
+      this.belongsTo(models.fileuploads, { foreignKey: "image",as: "ads_image" });
       this.belongsTo(models.user, { foreignKey: "user_id" });
       this.belongsTo(models.advertisement, { foreignKey: "advertisement_id" });
       this.belongsTo(models.client, { foreignKey: "client_id" });

@@ -16,7 +16,7 @@ module.exports = {
       "fileuploads",
       [
         {
-          name: "admin.jpeg",
+          name: "nepathyaLogo.png",
           size: 2932,
           type: "jpeg",
           created_at: new Date(),
