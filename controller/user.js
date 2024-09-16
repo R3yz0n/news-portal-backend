@@ -224,23 +224,23 @@ const editUserController = async (req, res, next) => {
       });
     }
 
-    const imageId = data[0].user_profile_id;
-    const fullImageUrl = req.body.profile_imageUrl; // Assuming imageUrl is passed in the request body
-    const fileName = fullImageUrl.substring(fullImageUrl.lastIndexOf("/") + 1);
-    const fileInfo = await fileuploads.update(
-      {
-        name: fileName, // Save the Cloudinary file name
-        size: req.files.profile_image.size, // Assuming file size is available
-        type: req.files.profile_image.mimetype, // Assuming MIME type is available
-      },
-      {
-        where: {
-          id: imageId,
-        },
-      },
+    // const imageId = data[0].user_profile_id;
+    // const fullImageUrl = req.body.profile_imageUrl; // Assuming imageUrl is passed in the request body
+    // const fileName = fullImageUrl.substring(fullImageUrl.lastIndexOf("/") + 1);
+    // const fileInfo = await fileuploads.update(
+    //   {
+    //     name: fileName, // Save the Cloudinary file name
+    //     size: req.files.profile_image.size, // Assuming file size is available
+    //     type: req.files.profile_image.mimetype, // Assuming MIME type is available
+    //   },
+    //   {
+    //     where: {
+    //       id: imageId,
+    //     },
+    //   },
 
-      { transaction: transactionx }
-    );
+    //   { transaction: transactionx }
+    // );
     const editedData = await user.update(
       editUserData,
       {
