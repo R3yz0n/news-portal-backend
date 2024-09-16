@@ -251,16 +251,16 @@ const editUserController = async (req, res, next) => {
       { transaction: transactionx }
     );
     if (fileInfo[0] == 1 && (editedData[0] == 1 || editedData[0] == 0)) {
-      await cloudinary.uploader.destroy(req.files.featured_image.name);
-      editUserData["profile_image"] = req.file.filename;
-      await transactionx.commit();
+      // await cloudinary.uploader.destroy(req.files.featured_image.name);
+      // editUserData["profile_image"] = req.file.filename;
+      // await transactionx.commit();
       return res.status(200).json({
         success: true,
         data: editUserData,
       });
     } else {
       await transactionx.rollback();
-      await cloudinary.uploader.destroy(req.files.featured_image.name);
+      // await cloudinary.uploader.destroy(req.files.featured_image.name);
       return res.status(500).json({
         success: false,
         error: "Server error",
@@ -269,7 +269,7 @@ const editUserController = async (req, res, next) => {
   } catch (error) {
     console.log(error);
     if (file) {
-      await cloudinary.uploader.destroy(req.files.featured_image.name);
+      // await cloudinary.uploader.destroy(req.files.featured_image.name);
     }
     await transactionx.rollback();
     return res.status(500).json({
