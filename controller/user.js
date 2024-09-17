@@ -184,7 +184,9 @@ const loginController = async (req, res, next) => {
 
 const editUserController = async (req, res, next) => {
   let transactionx = await db.sequelize.transaction();
-  // const file = req.files;
+  const file = req.files;
+
+  
 
   const { fullname, address, phone_no, gender } = req.body;
   const editUserData = {
@@ -206,7 +208,7 @@ const editUserController = async (req, res, next) => {
         message: "user not found",
       });
     }
-    // if (file === undefined) {
+    if (file === undefined || file === null) {
       let editedData = await user.update(
         editUserData,
         {
@@ -222,55 +224,55 @@ const editUserController = async (req, res, next) => {
         success: true,
         data: editUserData,
       });
-    // }
+    }
 
-    // const imageId = data[0].user_profile_id;
-    // const fullImageUrl = req.body.profile_imageUrl; // Assuming imageUrl is passed in the request body
-    // const fileName = fullImageUrl.substring(fullImageUrl.lastIndexOf("/") + 1);
-    // const fileInfo = await fileuploads.update(
-    //   {
-    //     name: fileName, // Save the Cloudinary file name
-    //     size: req.files.profile_image.size, // Assuming file size is available
-    //     type: req.files.profile_image.mimetype, // Assuming MIME type is available
-    //   },
-    //   {
-    //     where: {
-    //       id: imageId,
-    //     },
-    //   },
+    const imageId = data[0].user_profile_id;
+    const fullImageUrl = req.body.profile_imageUrl; // Assuming imageUrl is passed in the request body
+    const fileName = fullImageUrl.substring(fullImageUrl.lastIndexOf("/") + 1);
+    const fileInfo = await fileuploads.update(
+      {
+        name: fileName, // Save the Cloudinary file name
+        size: req.files.profile_image.size, // Assuming file size is available
+        type: req.files.profile_image.mimetype, // Assuming MIME type is available
+      },
+      {
+        where: {
+          id: imageId,
+        },
+      },
 
-    //   { transaction: transactionx }
-    // );
-    // const editedData = await user.update(
-    //   editUserData,
-    //   {
-    //     where: {
-    //       id: req.params.id,
-    //     },
-    //   },
-    //   { transaction: transactionx }
-    // );
-    // if ((editedData[0] == 1 || editedData[0] == 0)) {
-    //   // await cloudinary.uploader.destroy(req.files.featured_image.name);
-    //   // editUserData["profile_image"] = req.file.filename;
-    //   // await transactionx.commit();
-    //   return res.status(200).json({
-    //     success: true,
-    //     data: editUserData,
-    //   });
-    // } else {
-    //   await transactionx.rollback();
-    //   // await cloudinary.uploader.destroy(req.files.featured_image.name);
-    //   return res.status(500).json({
-    //     success: false,
-    //     error: "Server error",
-    //   });
-    // }
+      { transaction: transactionx }
+    );
+    const editedData = await user.update(
+      editUserData,
+      {
+        where: {
+          id: req.params.id,
+        },
+      },
+      { transaction: transactionx }
+    );
+    if ((editedData[0] == 1 || editedData[0] == 0)) {
+      await cloudinary.uploader.destroy(req.files.featured_image.name);
+      editUserData["profile_image"] = req.file.filename;
+      await transactionx.commit();
+      return res.status(200).json({
+        success: true,
+        data: editUserData,
+      });
+    } else {
+      await transactionx.rollback();
+      await cloudinary.uploader.destroy(req.files.featured_image.name);
+      return res.status(500).json({
+        success: false,
+        error: "Server error",
+      });
+    }
   } catch (error) {
     console.log(error);
-    // if (file) {
-    //   // await cloudinary.uploader.destroy(req.files.featured_image.name);
-    // }
+    if (file) {
+      await cloudinary.uploader.destroy(req.files.featured_image.name);
+    }
     await transactionx.rollback();
     return res.status(500).json({
       success: false,

@@ -165,6 +165,7 @@ const updateCompany = async (id, editedCompanyData, transactionx) => {
 const editCompany = async (req, res) => {
   let transactionx = await db.sequelize.transaction();
   const file = req.file;
+  
   try {
     const editedCompanyData = {
       name: req.body.name,
@@ -186,7 +187,7 @@ const editCompany = async (req, res) => {
     };
     await updateCompany(req.params.id, editedCompanyData, transactionx);
 
-    if (file != undefined) {
+    if (file != undefined || file != null) {
       const data = await company.findOne({
         where: {
           id: req.params.id,

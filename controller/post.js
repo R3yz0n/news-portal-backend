@@ -171,8 +171,7 @@ const editPostController = async (req, res, next) => {
       status,
     };
 
-    const fullImageUrl = req.body.featured_imageUrl;
-    const fileName = fullImageUrl.substring(fullImageUrl.lastIndexOf("/") + 1);
+
 
     const postData = await post.findOne({
       attributes: ["id", "title", "featured_image_id"],
@@ -193,7 +192,9 @@ const editPostController = async (req, res, next) => {
       return res.status(200).json({ success: true, data: editPostData });
     }
 
-    const imageId = postData.featured_image_id;
+        const fullImageUrl = req.body.featured_imageUrl;
+        const fileName = fullImageUrl.substring(fullImageUrl.lastIndexOf("/") + 1);
+        const imageId = postData.featured_image_id;
     const previousFile = await fileuploads.findOne({ where: { id: imageId }, transaction: transactionx });
 
     await fileuploads.update(
@@ -212,6 +213,7 @@ const editPostController = async (req, res, next) => {
 
     await transactionx.commit();
     return res.status(200).json({ success: true, data: editPostData });
+
   } catch (error) {
     console.error(error);
 

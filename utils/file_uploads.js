@@ -32,27 +32,28 @@ const uploadToCloudinary = (file) => {
  */
 const uploadFile = (name, isSingle = true) => {
   return async (req, res, next) => {
-    console.log("hello",req.files);
     try {
-      // Check if files are present
-      if (!req.files || !req.files[name]) {
-        return res.status(400).json({ message: "No files were uploaded." });
-      }
+      
+      // // // Check if files are present
+      // if (!req.files || !req.files[name]) {
+      //   // return res.status(400).json({ message: "No files were uploaded." });
+      //   next();
+      // }
 
       // Single file upload
-      if (isSingle) {
+      if (isSingle && req.files) {
         const file = req.files[name];
         const result = await uploadToCloudinary(file);
         // console.log(result);
         req.body[`${name}Url`] = result.secure_url; // Attach Cloudinary URL to the request body`
-      } else {
-        // Multiple file upload
-        const files = req.files[name];
-        const uploadPromises = files.map((file) => uploadToCloudinary(file));
-        const results = await Promise.all(uploadPromises);
-        req.body[`${name}Urls`] = results.map((result) => result.secure_url); // Attach Cloudinary URLs to the request body
-      }
-
+      } 
+      // else {
+      //   // Multiple file upload
+      //   const files = req.files[name];
+      //   const uploadPromises = files.map((file) => uploadToCloudinary(file));
+      //   const results = await Promise.all(uploadPromises);
+      //   req.body[`${name}Urls`] = results.map((result) => result.secure_url); // Attach Cloudinary URLs to the request body
+      // }
       next(); // Proceed to the next middleware or controller
     } catch (error) {
       return res.status(500).json({ message: "File upload failed", error });

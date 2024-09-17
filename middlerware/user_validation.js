@@ -7,7 +7,6 @@ const userValidation = async (req, res, next) => {
     address: "required|string",
     password: "required|string",
     phone_no: "required|string",
-    profile_imageUrl: "required",
   };
   validationRule["gender"] = ["required", { in: ["male", "female", "other"] }];
   if (req.files !== undefined) {
