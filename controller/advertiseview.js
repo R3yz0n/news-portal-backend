@@ -77,6 +77,17 @@ const specificCategoryAdversties = async (req, res) => {
         status: 1,
       },
       order: [["id", "DESC"]],
+      include: [
+        {
+          model: advertisement,
+          attributes: ["id", "type"],
+        },
+          { 
+            model: fileuploads,
+            as: "ads_image",
+            attributes: { exclude: ["updated_at"] },
+          },
+      ],
     });
     return res.status(200).json({
       success: true,
