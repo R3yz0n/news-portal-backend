@@ -332,7 +332,7 @@ const getListAdvertisesClientController = async (req, res) => {
     where: { id: clientId },
     attributes: ["total", "name"],
   });
-  const totalAmount = clientData.total;
+  const totalAmount = clientData?.total;
   const transactionData = await transaction.findOne({
     where: { client_id: clientId },
     attributes: [[Sequelize.fn("sum", Sequelize.col("paid")), "total_paid"]],

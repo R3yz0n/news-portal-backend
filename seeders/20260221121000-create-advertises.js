@@ -124,25 +124,25 @@ module.exports = {
     await queryInterface.bulkInsert("transactions", [
       {
         client_id: 1,
-        paid: 10000,
+        paid: 100,
         created_at: new Date(),
         updated_at: new Date(),
       },
       {
         client_id: 2,
-        paid: 8000,
+        paid: 0,
         created_at: new Date(),
         updated_at: new Date(),
       },
       {
         client_id: 3,
-        paid: 9000,
+        paid: 0,
         created_at: new Date(),
         updated_at: new Date(),
       },
       {
         client_id: 4,
-        paid: 7000,
+        paid: 0,
         created_at: new Date(),
         updated_at: new Date(),
       },

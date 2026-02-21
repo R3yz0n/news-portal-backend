@@ -1,3 +1,5 @@
+# Frontend GitHub: [https://github.com/R3yz0n/news-portal-frontend](https://github.com/R3yz0n/news-portal-frontend)
+
 # News Portal Backend
 
 This is the backend server for the News Portal project.
