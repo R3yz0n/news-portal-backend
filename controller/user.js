@@ -32,7 +32,7 @@ const createUserController = async (req, res, next) => {
         size: req.files.profile_image.size, // Assuming file size is available
         type: req.files.profile_image.mimetype, // Assuming MIME type is available
       },
-      { transaction: transactionx }
+      { transaction: transactionx },
     );
     userData["user_profile_id"] = fileInfo.id;
     const data = await user.create(userData, { transaction: transactionx });
@@ -66,41 +66,27 @@ const createUserController = async (req, res, next) => {
 
 const getUserController = async (req, res, nex) => {
   try {
-    const { page = 0, size = 0 } = req.query;
+    const { page = 0, size = 10 } = req.query; // Default size to 10
     const { limit, offset } = PaginationData.getPagination(page, size);
     const { filter = "" } = req.query;
+
+    // Apply filtering only if filter is not empty
+    const whereCondition = filter
+      ? {
+          [Op.or]: [
+            { fullname: { [Op.like]: `%${filter}%` } },
+            { username: { [Op.like]: `%${filter}%` } },
+            { address: { [Op.like]: `%${filter}%` } },
+            { gender: { [Op.like]: `%${filter}%` } },
+            { phone_no: { [Op.like]: `%${filter}%` } },
+          ],
+        }
+      : {}; // No filtering if filter is empty
+
     const data = await user.findAndCountAll({
       limit,
       offset,
-      where: {
-        [Op.or]: [
-          {
-            fullname: {
-              [Op.like]: `%${filter}%`,
-            },
-          },
-          {
-            username: {
-              [Op.like]: `%${filter}%`,
-            },
-          },
-          {
-            address: {
-              [Op.like]: `%${filter}%`,
-            },
-          },
-          {
-            gender: {
-              [Op.like]: `%${filter}%`,
-            },
-          },
-          {
-            phone_no: {
-              [Op.like]: `%${filter}%`,
-            },
-          },
-        ],
-      },
+      where: whereCondition,
       attributes: [
         "id",
         "fullname",
@@ -113,10 +99,13 @@ const getUserController = async (req, res, nex) => {
       include: {
         model: fileuploads,
         attributes: ["name"],
-        required: true,
+        required: false, // Include users even if they don't have fileuploads
       },
       raw: true,
     });
+
+    console.log("Data:", data); // Log the results for debugging
+
     return res.status(200).json({
       success: true,
       data: data.rows,
@@ -186,8 +175,6 @@ const editUserController = async (req, res, next) => {
   let transactionx = await db.sequelize.transaction();
   const file = req.files;
 
-  
-
   const { fullname, address, phone_no, gender } = req.body;
   const editUserData = {
     fullname: fullname,
@@ -216,7 +203,7 @@ const editUserController = async (req, res, next) => {
             id: req.params.id,
           },
         },
-        { transaction: transactionx }
+        { transaction: transactionx },
       );
       await transactionx.commit();
       editedData = { editUserData };
@@ -241,7 +228,7 @@ const editUserController = async (req, res, next) => {
         },
       },
 
-      { transaction: transactionx }
+      { transaction: transactionx },
     );
     const editedData = await user.update(
       editUserData,
@@ -250,9 +237,9 @@ const editUserController = async (req, res, next) => {
           id: req.params.id,
         },
       },
-      { transaction: transactionx }
+      { transaction: transactionx },
     );
-    if ((editedData[0] == 1 || editedData[0] == 0)) {
+    if (editedData[0] == 1 || editedData[0] == 0) {
       await cloudinary.uploader.destroy(req.files.featured_image.name);
       editUserData["profile_image"] = req.file.filename;
       await transactionx.commit();

@@ -33,7 +33,6 @@ const uploadToCloudinary = (file) => {
 const uploadFile = (name, isSingle = true) => {
   return async (req, res, next) => {
     try {
-      
       // // // Check if files are present
       // if (!req.files || !req.files[name]) {
       //   // return res.status(400).json({ message: "No files were uploaded." });
@@ -46,7 +45,7 @@ const uploadFile = (name, isSingle = true) => {
         const result = await uploadToCloudinary(file);
         // console.log(result);
         req.body[`${name}Url`] = result.secure_url; // Attach Cloudinary URL to the request body`
-      } 
+      }
       // else {
       //   // Multiple file upload
       //   const files = req.files[name];

@@ -1,11 +1,5 @@
 const { Sequelize, Op } = require("sequelize");
-const {
-  advertises,
-  client,
-  advertisement,
-  transaction,
-  fileuploads,
-} = require("../models");
+const { advertises, client, advertisement, transaction, fileuploads } = require("../models");
 const db = require("../models");
 const removeFile = require("../utils/remove_file");
 const PaginationData = require("../utils/pagination");
@@ -172,9 +166,7 @@ const createAdvertisesController = async (req, res) => {
     });
 
     if (!advertisementData) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Advertisement not found" });
+      return res.status(404).json({ success: false, error: "Advertisement not found" });
     }
 
     const discountPrice = parseInt(discount || 0);
@@ -185,9 +177,7 @@ const createAdvertisesController = async (req, res) => {
     const totalMonthDifference = calculateMonthDifference(startDate, endDate);
 
     // Calculate total price with discount
-    let total_price = parseInt(
-      totalMonthDifference * advertisementData.rate - discountPrice
-    );
+    let total_price = parseInt(totalMonthDifference * advertisementData.rate - discountPrice);
 
     if (total_price < 0) {
       if (req.files && req.files.image && req.files.image.public_id) {
@@ -212,7 +202,7 @@ const createAdvertisesController = async (req, res) => {
         size: req.files.image.size, // Assuming file size is available
         type: req.files.image.mimetype, // Assuming MIME type is available
       },
-      { transaction: transactionx }
+      { transaction: transactionx },
     );
 
     // Prepare advertisement data
@@ -241,9 +231,7 @@ const createAdvertisesController = async (req, res) => {
       if (req.files && req.files.image && req.files.image.public_id) {
         await cloudinary.uploader.destroy(req.files.image.public_id);
       }
-      return res
-        .status(404)
-        .json({ success: false, error: "Client not found" });
+      return res.status(404).json({ success: false, error: "Client not found" });
     }
 
     // Calculate grand total for the client
@@ -257,15 +245,12 @@ const createAdvertisesController = async (req, res) => {
     // Update client total
     await client.update(
       { total: grandTotal },
-      { where: { id: client_id }, transaction: transactionx }
+      { where: { id: client_id }, transaction: transactionx },
     );
 
     // Handle payment if paid_amount is provided
     if (paid_amount > 0) {
-      await transaction.create(
-        { client_id, paid: paid_amount },
-        { transaction: transactionx }
-      );
+      await transaction.create({ client_id, paid: paid_amount }, { transaction: transactionx });
     }
 
     // Commit transaction if successful
@@ -320,9 +305,7 @@ const getListAdvertisesController = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    return res
-      .status(500)
-      .json({ success: false, error: "Internal Server Error" });
+    return res.status(500).json({ success: false, error: "Internal Server Error" });
   }
 };
 
@@ -337,6 +320,11 @@ const getListAdvertisesClientController = async (req, res) => {
       {
         model: advertisement,
         attributes: ["id", "type"],
+      },
+      {
+        model: fileuploads,
+        as: "ads_image", // Use the alias defined in your model association
+        attributes: ["id", "name", "size", "type", "created_at", "updated_at"],
       },
     ],
   });
@@ -378,9 +366,7 @@ const updateAdvertisesController = async (req, res) => {
     });
 
     if (!advertisesData) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Advertisement not found" });
+      return res.status(404).json({ success: false, error: "Advertisement not found" });
     }
 
     const advertisesUpdateData = {
@@ -394,9 +380,7 @@ const updateAdvertisesController = async (req, res) => {
     // If there's a new file in the request, update it
     if (req.files) {
       const fullImageUrl = req.body.imageUrl; // Assuming imageUrl is passed in the request body
-      const fileName = fullImageUrl.substring(
-        fullImageUrl.lastIndexOf("/") + 1
-      );
+      const fileName = fullImageUrl.substring(fullImageUrl.lastIndexOf("/") + 1);
 
       // Save new file information to `fileuploads` table
       fileInfo = await fileuploads.create(
@@ -405,7 +389,7 @@ const updateAdvertisesController = async (req, res) => {
           size: req.files.image.size, // Assuming file size is available
           type: req.files.image.mimetype, // Assuming MIME type is available
         },
-        { transaction: transactionx }
+        { transaction: transactionx },
       );
 
       advertisesUpdateData["image"] = fileInfo.id; // Update the advertisement's image with new file info
@@ -516,7 +500,7 @@ const getallAdvertiseClientController = async (req, res) => {
         "phone_no",
         [
           Sequelize.literal(
-            "CAST((SELECT COALESCE(SUM(paid), 0) FROM transactions WHERE transactions.client_id = client.id) AS SIGNED)"
+            "CAST((SELECT COALESCE(SUM(paid), 0) FROM transactions WHERE transactions.client_id = client.id) AS SIGNED)",
           ),
           "paid_amount",
         ],

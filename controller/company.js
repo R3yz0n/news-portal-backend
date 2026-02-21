@@ -25,7 +25,7 @@ const getCompanyController = async (req, res, next) => {
       attributes: { exclude: ["created_at", "updated_at"] },
       attributes: { exclude: ["created_at", "updated_at"] },
     });
-    
+
     return res.status(200).json({
       success: true,
       data: data,
@@ -46,7 +46,6 @@ const createCompanyController = async (req, res, next) => {
   try {
     const checkCompanyData = await company.findAll({ attributes: ["name"] });
     if (checkCompanyData.length === 1) {
-
       return res.status(403).json({
         success: false,
         error: "Already  Create",
@@ -63,8 +62,7 @@ const createCompanyController = async (req, res, next) => {
       reporter: req.body.reporter,
       salahakar: req.body.salahakar,
       ji_pra_ka_ru_d_no: req.body.ji_pra_ka_ru_d_no,
-      media_biva_registration_cretificate_no:
-        req.body.media_biva_registration_cretificate_no,
+      media_biva_registration_cretificate_no: req.body.media_biva_registration_cretificate_no,
       press_council_registration_no: req.body.press_council_registration_no,
       local_pra_registration_no: req.body.local_pra_registration_no,
       privacypolicy: req.body.privacypolicy,
@@ -143,9 +141,7 @@ const deleteCompany = async (req, res) => {
       });
     }
   } catch {
-    return res
-      .status(500)
-      .json({ error: "Internal Server Error", message: err });
+    return res.status(500).json({ error: "Internal Server Error", message: err });
   }
 };
 
@@ -157,16 +153,15 @@ const updateCompany = async (id, editedCompanyData, transactionx) => {
         id: id,
       },
     },
-    { transaction: transactionx }
+    { transaction: transactionx },
   );
   return updatedCompany;
 };
 
 const editCompany = async (req, res) => {
   let transactionx = await db.sequelize.transaction();
-  const file = req.file;
-  
   try {
+    console.log("PATCH /company/:id req.body:", req.body);
     const editedCompanyData = {
       name: req.body.name,
       slogan: req.body.slogan,
@@ -178,8 +173,7 @@ const editCompany = async (req, res) => {
       reporter: req.body.reporter,
       salahakar: req.body.salahakar,
       ji_pra_ka_ru_d_no: req.body.ji_pra_ka_ru_d_no,
-      media_biva_registration_cretificate_no:
-        req.body.media_biva_registration_cretificate_no,
+      media_biva_registration_cretificate_no: req.body.media_biva_registration_cretificate_no,
       press_council_registration_no: req.body.press_council_registration_no,
       local_pra_registration_no: req.body.local_pra_registration_no,
       privacypolicy: req.body.privacypolicy,
@@ -187,19 +181,27 @@ const editCompany = async (req, res) => {
     };
     await updateCompany(req.params.id, editedCompanyData, transactionx);
 
-    if (file != undefined || file != null) {
+    // Handle logo update if a new logo is provided (match post logic)
+    if (req.body.logoUrl && req.files && req.files.logo) {
+      console.log(
+        "Updating logo in DB:",
+        req.body.logoUrl,
+        req.files.logo.size,
+        req.files.logo.mimetype,
+      );
       const data = await company.findOne({
         where: {
           id: req.params.id,
         },
       });
       const imageId = data.logo_id;
-      const previousFile = await fileuploads.findOne({ where: { id: imageId }, transaction: transactionx });
-      console.log(imageId);
-      
+      const previousFile = await fileuploads.findOne({
+        where: { id: imageId },
+        transaction: transactionx,
+      });
       const fullImageUrl = req.body.logoUrl;
       const fileName = fullImageUrl.substring(fullImageUrl.lastIndexOf("/") + 1);
-      const fileInfo = await fileuploads.update(
+      await fileuploads.update(
         {
           name: fileName,
           size: req.files.logo.size,
@@ -210,10 +212,16 @@ const editCompany = async (req, res) => {
             id: imageId,
           },
         },
-
-        { transaction: transactionx }
+        { transaction: transactionx },
       );
-      console.log(fileInfo);
+      // Optionally, clean up old image from Cloudinary
+      if (previousFile && previousFile.name && previousFile.name !== fileName) {
+        try {
+          await cloudinary.uploader.destroy(previousFile.name);
+        } catch (cloudErr) {
+          console.error("Cloudinary cleanup error:", cloudErr);
+        }
+      }
     }
 
     await socialmedia.destroy(
@@ -222,7 +230,7 @@ const editCompany = async (req, res) => {
           company_id: req.params.id,
         },
       },
-      { transaction: transactionx }
+      { transaction: transactionx },
     );
 
     let socialmedialink = req.body.social_media;
@@ -230,13 +238,11 @@ const editCompany = async (req, res) => {
     socialmedialink.map((value) => {
       value["company_id"] = req.params.id;
     });
-    filteredData = socialmedialink.map(
-      ({ name, social_media_link, company_id }) => ({
-        name,
-        social_media_link,
-        company_id,
-      })
-    );
+    const filteredData = socialmedialink.map(({ name, social_media_link, company_id }) => ({
+      name,
+      social_media_link,
+      company_id,
+    }));
     let socailMedia = await socialmedia.bulkCreate([...filteredData], {
       transaction: transactionx,
     });
@@ -252,11 +258,7 @@ const editCompany = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    if (req.file) {
-      await cloudinary.uploader.destroy(previousFile.name);
-    }
     await transactionx.rollback();
-
     return res.status(500).json({
       success: false,
       error: "Server error",

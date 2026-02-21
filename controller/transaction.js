@@ -22,7 +22,7 @@ const createTransaction = async (req, res) => {
         where: {
           id: client_id,
         },
-      }
+      },
     );
 
     console.log(updatedClient);
@@ -35,9 +35,7 @@ const createTransaction = async (req, res) => {
   } catch (err) {
     await transactionx.rollback();
     console.log(err);
-    return res
-      .status(500)
-      .json({ error: "Internal Server Error", message: err });
+    return res.status(500).json({ error: "Internal Server Error", message: err });
   }
 };
 
@@ -89,12 +87,7 @@ const getAllListTransactionclient = async (req, res) => {
         "id",
         "name",
         "total",
-        [
-          Sequelize.literal(
-            "CAST(COALESCE(SUM(transactions.paid), 0) AS UNSIGNED)"
-          ),
-          "paid_amount",
-        ],
+        [Sequelize.literal("CAST(COALESCE(SUM(transactions.paid), 0) AS UNSIGNED)"), "paid_amount"],
       ],
       include: [
         {
@@ -119,10 +112,7 @@ const getAllListTransactionclient = async (req, res) => {
 const getAllClientsTotalPaidAmount = async (req, res) => {
   try {
     const results = await transaction.findAll({
-      attributes: [
-        "client_id",
-        [Sequelize.literal("SUM(paid)"), "totalPaidAmount"],
-      ],
+      attributes: ["client_id", [Sequelize.literal("SUM(paid)"), "totalPaidAmount"]],
       include: [
         {
           model: client,
