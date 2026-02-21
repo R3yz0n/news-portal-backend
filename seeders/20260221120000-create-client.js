@@ -25,6 +25,7 @@ module.exports = {
         address: "Pokhara, Nepal",
         created_at: new Date(),
         updated_at: new Date(),
+        total: 1000,
       },
       {
         name: "Hari Sharma",
@@ -32,6 +33,7 @@ module.exports = {
         address: "Lalitpur, Nepal",
         created_at: new Date(),
         updated_at: new Date(),
+        total: 1000,
       },
       {
         name: "Maya Gurung",
