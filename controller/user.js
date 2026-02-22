@@ -22,22 +22,27 @@ const createUserController = async (req, res, next) => {
       role: "user",
       password: hash,
     };
-    const fullImageUrl = req.body.profile_imageUrl; // Assuming imageUrl is passed in the request body
-    const fileName = fullImageUrl.substring(fullImageUrl.lastIndexOf("/") + 1);
+    let fileName = null;
+    if (req.body.profile_imageUrl) {
+      const fullImageUrl = req.body.profile_imageUrl;
+      fileName = fullImageUrl.substring(fullImageUrl.lastIndexOf("/") + 1);
+    }
 
-    // Save file information to `fileuploads` table
-    const fileInfo = await fileuploads.create(
-      {
-        name: fileName, // Save the Cloudinary file name
-        size: req.files.profile_image.size, // Assuming file size is available
-        type: req.files.profile_image.mimetype, // Assuming MIME type is available
-      },
-      { transaction: transactionx },
-    );
-    userData["user_profile_id"] = fileInfo.id;
+    let fileInfo = null;
+    if (fileName && req.files && req.files.profile_image) {
+      fileInfo = await fileuploads.create(
+        {
+          name: fileName, // Save the Cloudinary file name
+          size: req.files.profile_image.size, // Assuming file size is available
+          type: req.files.profile_image.mimetype, // Assuming MIME type is available
+        },
+        { transaction: transactionx },
+      );
+      userData["user_profile_id"] = fileInfo.id;
+      userData["profile_image"] = fileName;
+    }
     const data = await user.create(userData, { transaction: transactionx });
     userData["id"] = data.id;
-    userData["profile_image"] = fileName;
     await transactionx.commit();
     return res.status(200).json({
       success: true,

@@ -38,7 +38,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       user_profile_id: {
         type: INTEGER,
-        allowNull: false,
+        allowNull: true,
       },
       role: {
         type: String,
@@ -61,7 +61,7 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       modelName: "user",
       timestamps: false,
-    }
+    },
   );
   return user;
 };
